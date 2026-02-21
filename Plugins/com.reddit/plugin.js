@@ -265,6 +265,39 @@ function itemForData(item) {
 				attachments.push(attachment);
 			}
 		}
+		else if (item["preview"] != null) {
+			if (item["preview"].reddit_video_preview != null && item["preview"].reddit_video_preview.hls_url != null) {
+				if (attachments == null) {
+					attachments = [];
+				}
+		
+				let videoUrl = stripQueryParameters(item["preview"].reddit_video_preview.hls_url);
+				let posterUrl = item.thumbnail;
+				let aspectSize = null;
+				if (attachments.length > 0) {
+					posterUrl = attachments[0].url ?? attachments[0].media;
+		
+					if (attachments[0].aspectSize != null) {
+						aspectSize = attachments[0].aspectSize;
+					}
+				}
+		
+				const attachment = MediaAttachment.createWithUrl(videoUrl);
+				attachment.thumbnail = posterUrl;
+				if (aspectSize != null) {
+					attachment.aspectSize = aspectSize;
+				}
+				attachment.mimeType = "video/mp4";
+		
+				// replace first attachment with video and poster image
+				if (attachments.length > 0) {
+					attachments[0] = attachment;
+				}
+				else {
+					attachments.push(attachment);
+				}
+			}
+		}
 		else if (item["secure_media_embed"]?.content != null) {
 			content = content + `<p>${item["secure_media_embed"].content}</p>`;
 		}
