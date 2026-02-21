@@ -1,6 +1,20 @@
 
 // com.reddit.account
 
+// Helper function to strip query parameters from URLs
+function stripQueryParameters(url) {
+	if (url == null) {
+		return url;
+	}
+	try {
+		const urlObject = new URL(url);
+		return urlObject.origin + urlObject.pathname;
+	} catch (e) {
+		// If URL parsing fails, return the original URL
+		return url;
+	}
+}
+
 function verify() {
 	sendRequest(`${site}/user/${account}/submitted.json?raw_json=1`, "HEAD")
 	.then((dictionary) => {
@@ -77,7 +91,7 @@ function itemForData(item) {
 		if (images.length > 0) {
 			attachments = [];
 			for (const image of images) {
-				let url = image.source.url;
+				let url = stripQueryParameters(image.source.url);
 				let width = image.source.width;
 				let height = image.source.height;
 				if (url != null) {
@@ -113,7 +127,7 @@ function itemForData(item) {
 						if (metadata.m != null) {
 							mimeType = metadata.m;
 						}
-						const image = metadata.s.u;
+						const image = stripQueryParameters(metadata.s.u);
 						// TODO: Use the metadata.p.u URL as a thumbnail.
 						// TODO: Use s.x and s.y to create aspect ratio
 						if (image != null) {
@@ -156,7 +170,7 @@ function itemForData(item) {
 					if (metadata.m != null) {
 						mimeType = metadata.m;
 					}
-					const image = metadata.s.u;
+					const image = stripQueryParameters(metadata.s.u);
 					// TODO: Use the metadata.p.u URL as a thumbnail.
 					// TODO: Use s.x and s.y to create aspect ratio
 					if (image != null) {
@@ -174,7 +188,7 @@ function itemForData(item) {
 					}	
 				}
 				else if (metadata.hlsUrl != null) {
-					const video = metadata.hlsUrl;
+					const video = stripQueryParameters(metadata.hlsUrl);
 					if (video != null) {
 						let width = null;
 						if (metadata.x != null) {
@@ -197,7 +211,7 @@ function itemForData(item) {
 		}
 	}
 	else {
-		const image = item["url"];
+		const image = stripQueryParameters(item["url"]);
 		if (image != null) {
 			if (image.endsWith(".jpg") || image.endsWith(".jpeg")) {
 				const attachment = MediaAttachment.createWithUrl(image);
@@ -205,7 +219,7 @@ function itemForData(item) {
 				attachments = [attachment];
 			}
 			else {
-				const thumbnail = item["thumbnail"];
+				const thumbnail = stripQueryParameters(item["thumbnail"]);
 				if (thumbnail != null && (thumbnail.endsWith(".jpg") || thumbnail.endsWith(".jpeg"))) {
 					const attachment = MediaAttachment.createWithUrl(thumbnail);
 					attachment.mimeType = "image/jpeg";
@@ -221,7 +235,7 @@ function itemForData(item) {
 				attachments = [];
 			}
 		
-			let videoUrl = item["secure_media"].reddit_video.hls_url;
+			let videoUrl = stripQueryParameters(item["secure_media"].reddit_video.hls_url);
 			let posterUrl = item.thumbnail;
 			let aspectSize = null;
 			if (attachments.length > 0) {
