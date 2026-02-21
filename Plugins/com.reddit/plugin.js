@@ -271,7 +271,7 @@ function itemForData(item) {
 					attachments = [];
 				}
 		
-				let videoUrl = stripQueryParameters(item["preview"].reddit_video_preview.hls_url);
+				let videoUrl = item["preview"].reddit_video_preview.hls_url;
 				let posterUrl = item.thumbnail;
 				let aspectSize = null;
 				if (attachments.length > 0) {
