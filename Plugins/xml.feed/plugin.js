@@ -10,6 +10,22 @@
 //   in an awesome RSS reader
 const userAgent = "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10_6_3; de-de) AppleWebKit/531.22.7 (KHTML, like Gecko) NetNewsWire/3.2.7 Tapestry/1.3";
 
+// Normalize date strings to ISO 8601 format that JavaScript can reliably parse -Claude
+// This is to work around GitHub's incorrect date in its Atom feed -Maurice
+function normalizeDateString(dateStr) {
+    if (!dateStr) return dateStr;
+    
+    // Handle format like "2026-02-15 06:26:01 -0800"
+    // Convert to ISO 8601: "2026-02-15T06:26:01-08:00"
+    const spaceTimezonePattern = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([-+]\d{2})(\d{2})$/;
+    const match = dateStr.match(spaceTimezonePattern);
+    if (match) {
+        return `${match[1]}T${match[2]}${match[3]}:${match[4]}`;
+    }
+    
+    return dateStr;
+}
+
 async function verify() {
     let xml = await sendRequest(site, "GET", null, {"user-agent": userAgent})
     let jsonObject = await xmlParse(xml);
@@ -238,10 +254,10 @@ async function load() {
 
             let date = null;
             if (entry.published) {
-                date = new Date(entry.published);
+                date = new Date(normalizeDateString(entry.published));
             }
             else if (entry.updated) {
-                date = new Date(entry.updated);
+                date = new Date(normalizeDateString(entry.updated));
             }
             else {
                 date = new Date();
