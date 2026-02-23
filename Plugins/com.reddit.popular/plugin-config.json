@@ -1,0 +1,21 @@
+{
+	"id": "com.reddit.popular",
+	"display_name": "Reddit - Popular",
+	"service_name": "Reddit",
+	"default_color": "coral",
+	"icon": "https://www.redditstatic.com/desktop2x/img/favicon/apple-icon-180x180.png",
+	"site": "https://www.reddit.com",
+	"needs_verification": true,
+	"provides_attachments": true,
+	"oauth_authorize": "https://www.reddit.com/api/v1/authorize.compact",
+	"oauth_token": "https://www.reddit.com/api/v1/access_token",
+	"oauth_type": "code",
+	"oauth_scope": "identity read",
+	"oauth_grant_type": "authorization_code",
+	"oauth_basic_auth": true,
+	"oauth_extra_parameters": "duration=permanent",
+	"needs_api_keys": true,
+	"refresh_status_code": 401,
+	"synchronizable_credentials": true,
+	"version": 1
+}
