@@ -65,10 +65,10 @@ function load() {
 			let item = child.data;
 			let resultItem = null;
 			if (item["crosspost_parent_list"] != null && item["crosspost_parent_list"][0] != null) {
-				resultItem = itemForData(item["crosspost_parent_list"][0]);
+				resultItem = itemForData(item, item["crosspost_parent_list"][0]["subreddit"]);
 			}
 			else {
-				resultItem = itemForData(item);
+				resultItem = itemForData(item, null);
 			}
 			
 			if (resultItem != null) {	
@@ -83,7 +83,7 @@ function load() {
 	});	
 }
 
-function itemForData(item) {
+function itemForData(item, crosspostSubreddit) {
 	const author = item["author"];
 	var identity = Identity.createWithName("u/" + author);
 	identity.uri = "https://www.reddit.com/user/" + author;
@@ -328,7 +328,17 @@ function itemForData(item) {
 		}
 	}
 
-	let annotation = null;
+	let annotations = null;
+	
+	if (crosspostSubreddit != null) {
+		if (annotations == null) {
+			annotations = [];
+		}
+		const subredditAnnotation = Annotation.createWithText("r/" + crosspostSubreddit);
+		subredditAnnotation.uri = `${site}/r/${crosspostSubreddit}`;
+		annotations.push(subredditAnnotation);
+	}
+	
 	let shortcodes = null;
 	if (includeFlair == "on") {
 		if (item["link_flair_type"] != null) {
@@ -336,17 +346,25 @@ function itemForData(item) {
 				if (item["link_flair_text"]?.length > 0) {
 					const linkFlairText = item["link_flair_text"];
 					const linkFlairParameter = encodeURIComponent(`flair_name:"${linkFlairText}"`);
-					annotation = Annotation.createWithText(linkFlairText);
+					if (annotations == null) {
+						annotations = [];
+					}
+					const annotation = Annotation.createWithText(linkFlairText);
 					annotation.uri = `${site}/r/${subreddit}/?f=${linkFlairParameter}`;
+					annotations.push(annotation);
 				}
 			}
 			else if (item["link_flair_type"] == "richtext") {
 				if (item["link_flair_text"]?.length > 0) {
 					const linkFlairText = item["link_flair_text"];
 					const linkFlairParameter = encodeURIComponent(`flair_name:"${linkFlairText}"`);
-					annotation = Annotation.createWithText(linkFlairText);
+					if (annotations == null) {
+						annotations = [];
+					}
+					const annotation = Annotation.createWithText(linkFlairText);
 					annotation.uri = `${site}/r/${subreddit}/?f=${linkFlairParameter}`;
-					
+					annotations.push(annotation);
+	
 					const itemLinkFlairRichText = item["link_flair_richtext"];
 					if (itemLinkFlairRichText instanceof Array) {
 						shortcodes = {};
@@ -366,7 +384,7 @@ function itemForData(item) {
 			}
 		}
 	}
-
+	
 	const resultItem = Item.createWithUriDate(uri, date);
 	resultItem.title = title;
 	resultItem.body = content;
@@ -374,8 +392,8 @@ function itemForData(item) {
 	if (attachments != null) {
 		resultItem.attachments = attachments;
 	}
-	if (annotation != null) {
-		resultItem.annotations = [annotation];
+	if (annotations != null) {
+		resultItem.annotations = annotations;
 	}
 	if (shortcodes != null) {
 		resultItem.shortcodes = shortcodes;
