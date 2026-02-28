@@ -6,13 +6,11 @@ function stripQueryParameters(url) {
 	if (url == null) {
 		return url;
 	}
-	try {
-		const urlObject = new URL(url);
-		return urlObject.origin + urlObject.pathname;
-	} catch (e) {
-		// If URL parsing fails, return the original URL
-		return url;
+	const index = url.indexOf('?');
+	if (index !== -1) {
+		return url.substring(0, index);
 	}
+	return url;
 }
 
 function verify() {
@@ -91,7 +89,7 @@ function itemForData(item) {
 		if (images.length > 0) {
 			attachments = [];
 			for (const image of images) {
-				let url = stripQueryParameters(image.source.url);
+				let url = image.source.url;
 				let width = image.source.width;
 				let height = image.source.height;
 				if (url != null) {
@@ -127,7 +125,7 @@ function itemForData(item) {
 						if (metadata.m != null) {
 							mimeType = metadata.m;
 						}
-						const image = stripQueryParameters(metadata.s.u);
+						const image = metadata.s.u;
 						// TODO: Use the metadata.p.u URL as a thumbnail.
 						// TODO: Use s.x and s.y to create aspect ratio
 						if (image != null) {
@@ -170,7 +168,7 @@ function itemForData(item) {
 					if (metadata.m != null) {
 						mimeType = metadata.m;
 					}
-					const image = stripQueryParameters(metadata.s.u);
+					const image = metadata.s.u;
 					// TODO: Use the metadata.p.u URL as a thumbnail.
 					// TODO: Use s.x and s.y to create aspect ratio
 					if (image != null) {
@@ -211,7 +209,7 @@ function itemForData(item) {
 		}
 	}
 	else {
-		const image = stripQueryParameters(item["url"]);
+		const image = item["url"];
 		if (image != null) {
 			if (image.endsWith(".jpg") || image.endsWith(".jpeg")) {
 				const attachment = MediaAttachment.createWithUrl(image);
@@ -219,7 +217,7 @@ function itemForData(item) {
 				attachments = [attachment];
 			}
 			else {
-				const thumbnail = stripQueryParameters(item["thumbnail"]);
+				const thumbnail = item["thumbnail"];
 				if (thumbnail != null && (thumbnail.endsWith(".jpg") || thumbnail.endsWith(".jpeg"))) {
 					const attachment = MediaAttachment.createWithUrl(thumbnail);
 					attachment.mimeType = "image/jpeg";
@@ -300,7 +298,7 @@ function itemForData(item) {
 	}
 	
 	if (item["post_hint"] == "link") {
-		const externalURL = stripQueryParameters(item["url_overridden_by_dest"]);
+		const externalURL = item["url_overridden_by_dest"];
 		if (externalURL != null) {
 			if (attachments == null) {
 				attachments = [];

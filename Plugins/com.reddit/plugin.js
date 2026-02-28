@@ -6,13 +6,11 @@ function stripQueryParameters(url) {
 	if (url == null) {
 		return url;
 	}
-	try {
-		const urlObject = new URL(url);
-		return urlObject.origin + urlObject.pathname;
-	} catch (e) {
-		// If URL parsing fails, return the original URL
-		return url;
+	const index = url.indexOf('?');
+	if (index !== -1) {
+		return url.substring(0, index);
 	}
+	return url;
 }
 
 function verify() {
@@ -27,25 +25,25 @@ function verify() {
 			processError(Error("Invalid Subreddit"));
 			return;
 		}
-				
+
 		const jsonObject = JSON.parse(response.body);
-		
+
 		if (jsonObject?.kind == "Listing") {
 			processError(Error("Invalid Subreddit"));
 			return;
 		}
-		
+
 		let icon = "https://www.redditstatic.com/desktop2x/img/favicon/apple-icon-180x180.png";
 		if (jsonObject?.data?.community_icon?.length > 0) {
 			icon = jsonObject?.data?.community_icon;
-		}		
+		}
 		else if (jsonObject?.data?.icon_img?.length > 0) {
 			icon = jsonObject?.data?.icon_img;
 		}
 		const verification = {
 			displayName: "r/" + subreddit,
 			icon: icon
-		};	
+		};
 		processVerification(verification);
 	})
 	.catch((requestError) => {
@@ -58,9 +56,9 @@ function load() {
 	sendRequest(`${site}/r/${subreddit}/${type}.json?raw_json=1`, "GET")
 	.then((text) => {
 		const jsonObject = JSON.parse(text);
-		
+
 		var results = [];
-		
+
 		for (const child of jsonObject.data.children) {
 			let item = child.data;
 			let resultItem = null;
@@ -70,17 +68,17 @@ function load() {
 			else {
 				resultItem = itemForData(item, null);
 			}
-			
-			if (resultItem != null) {	
+
+			if (resultItem != null) {
 				results.push(resultItem);
 			}
 		}
-		
+
 		processResults(results, true);
 	})
 	.catch((requestError) => {
 		processError(requestError);
-	});	
+	});
 }
 
 function itemForData(item, crosspostSubreddit) {
@@ -100,7 +98,7 @@ function itemForData(item, crosspostSubreddit) {
 		let processedContent = rawContent.replace(/href=\"\/r\//g, "href=\"https://www.reddit.com/r/");
 		content = content + processedContent;
 	}
-	
+
 	// TODO: Handle "crosspost_parent_list"
 
 	var attachments = null;
@@ -109,7 +107,7 @@ function itemForData(item, crosspostSubreddit) {
 		if (images.length > 0) {
 			attachments = [];
 			for (const image of images) {
-				let url = stripQueryParameters(image.source.url);
+				let url = image.source.url;
 				let width = image.source.width;
 				let height = image.source.height;
 				if (url != null) {
@@ -145,7 +143,7 @@ function itemForData(item, crosspostSubreddit) {
 						if (metadata.m != null) {
 							mimeType = metadata.m;
 						}
-						const image = stripQueryParameters(metadata.s.u);
+						const image = metadata.s.u;
 						// TODO: Use the metadata.p.u URL as a thumbnail.
 						// TODO: Use s.x and s.y to create aspect ratio
 						if (image != null) {
@@ -188,7 +186,7 @@ function itemForData(item, crosspostSubreddit) {
 					if (metadata.m != null) {
 						mimeType = metadata.m;
 					}
-					const image = stripQueryParameters(metadata.s.u);
+					const image = metadata.s.u;
 					// TODO: Use the metadata.p.u URL as a thumbnail.
 					// TODO: Use s.x and s.y to create aspect ratio
 					if (image != null) {
@@ -203,7 +201,7 @@ function itemForData(item, crosspostSubreddit) {
 							attachment.mimeType = "image";
 						}
 						attachments.push(attachment);
-					}	
+					}
 				}
 				else if (metadata.hlsUrl != null) {
 					const video = stripQueryParameters(metadata.hlsUrl);
@@ -229,7 +227,7 @@ function itemForData(item, crosspostSubreddit) {
 		}
 	}
 	else {
-		const image = stripQueryParameters(item["url"]);
+		const image = item["url"];
 		if (image != null) {
 			if (image.endsWith(".jpg") || image.endsWith(".jpeg")) {
 				const attachment = MediaAttachment.createWithUrl(image);
@@ -237,7 +235,7 @@ function itemForData(item, crosspostSubreddit) {
 				attachments = [attachment];
 			}
 			else {
-				const thumbnail = stripQueryParameters(item["thumbnail"]);
+				const thumbnail = item["thumbnail"];
 				if (thumbnail != null && (thumbnail.endsWith(".jpg") || thumbnail.endsWith(".jpeg"))) {
 					const attachment = MediaAttachment.createWithUrl(thumbnail);
 					attachment.mimeType = "image/jpeg";
@@ -252,9 +250,9 @@ function itemForData(item, crosspostSubreddit) {
 			if (attachments == null) {
 				attachments = [];
 			}
-		
+
 			let videoUrl = stripQueryParameters(item["secure_media"].reddit_video.hls_url);
-			let posterUrl = stripQueryParameters(item.thumbnail);
+			let posterUrl = item.thumbnail;
 			let aspectSize = null;
 			if (attachments.length > 0) {
 				posterUrl = attachments[0].url ?? attachments[0].media;
@@ -263,14 +261,14 @@ function itemForData(item, crosspostSubreddit) {
 					aspectSize = attachments[0].aspectSize;
 				}
 			}
-			
+
 			const attachment = MediaAttachment.createWithUrl(videoUrl);
 			attachment.thumbnail = posterUrl;
 			if (aspectSize != null) {
 				attachment.aspectSize = aspectSize;
 			}
 			attachment.mimeType = "video/mp4";
-			
+
 			// replace first attachment with video and poster image
 			if (attachments.length > 0) {
 				attachments[0] = attachment;
@@ -284,25 +282,25 @@ function itemForData(item, crosspostSubreddit) {
 				if (attachments == null) {
 					attachments = [];
 				}
-		
+
 				let videoUrl = stripQueryParameters(item["preview"].reddit_video_preview.hls_url);
 				let posterUrl = item.thumbnail;
 				let aspectSize = null;
 				if (attachments.length > 0) {
 					posterUrl = attachments[0].url ?? attachments[0].media;
-		
+
 					if (attachments[0].aspectSize != null) {
 						aspectSize = attachments[0].aspectSize;
 					}
 				}
-		
+
 				const attachment = MediaAttachment.createWithUrl(videoUrl);
 				attachment.thumbnail = posterUrl;
 				if (aspectSize != null) {
 					attachment.aspectSize = aspectSize;
 				}
 				attachment.mimeType = "video/mp4";
-		
+
 				// replace first attachment with video and poster image
 				if (attachments.length > 0) {
 					attachments[0] = attachment;
@@ -316,9 +314,9 @@ function itemForData(item, crosspostSubreddit) {
 			content = content + `<p>${item["secure_media_embed"].content}</p>`;
 		}
 	}
-	
+
 	if (item["post_hint"] == "link") {
-		const externalURL = stripQueryParameters(item["url_overridden_by_dest"]);
+		const externalURL = item["url_overridden_by_dest"];
 		if (externalURL != null) {
 			if (attachments == null) {
 				attachments = [];
@@ -329,7 +327,7 @@ function itemForData(item, crosspostSubreddit) {
 	}
 
 	let annotations = null;
-	
+
 	if (includeCrosspost == "on") {
 		if (crosspostSubreddit != null) {
 			annotations = [];
@@ -338,7 +336,7 @@ function itemForData(item, crosspostSubreddit) {
 			annotations.push(subredditAnnotation);
 		}
 	}
-	
+
 	let shortcodes = null;
 	if (includeFlair == "on") {
 		if (item["link_flair_type"] != null) {
@@ -364,7 +362,7 @@ function itemForData(item, crosspostSubreddit) {
 					const annotation = Annotation.createWithText(linkFlairText);
 					annotation.uri = `${site}/r/${subreddit}/?f=${linkFlairParameter}`;
 					annotations.push(annotation);
-	
+
 					const itemLinkFlairRichText = item["link_flair_richtext"];
 					if (itemLinkFlairRichText instanceof Array) {
 						shortcodes = {};
@@ -384,7 +382,7 @@ function itemForData(item, crosspostSubreddit) {
 			}
 		}
 	}
-	
+
 	const resultItem = Item.createWithUriDate(uri, date);
 	resultItem.title = title;
 	resultItem.body = content;
@@ -398,7 +396,8 @@ function itemForData(item, crosspostSubreddit) {
 	if (shortcodes != null) {
 		resultItem.shortcodes = shortcodes;
 	}
-	
+
 	return resultItem;
 }
+
 

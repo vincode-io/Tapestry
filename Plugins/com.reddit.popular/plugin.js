@@ -8,13 +8,11 @@ function stripQueryParameters(url) {
 	if (url == null) {
 		return url;
 	}
-	try {
-		const urlObject = new URL(url);
-		return urlObject.origin + urlObject.pathname;
-	} catch (e) {
-		// If URL parsing fails, return the original URL
-		return url;
+	const index = url.indexOf('?');
+	if (index !== -1) {
+		return url.substring(0, index);
 	}
+	return url;
 }
 
 function verify() {
@@ -102,7 +100,7 @@ function itemForData(item, crosspostSubreddit) {
 		if (images.length > 0) {
 			attachments = [];
 			for (const image of images) {
-				let url = stripQueryParameters(image.source.url);
+				let url = image.source.url;
 				let width = image.source.width;
 				let height = image.source.height;
 				if (url != null) {
@@ -138,7 +136,7 @@ function itemForData(item, crosspostSubreddit) {
 						if (metadata.m != null) {
 							mimeType = metadata.m;
 						}
-						const image = stripQueryParameters(metadata.s.u);
+						const image = metadata.s.u;
 						if (image != null) {
 							const attachment = MediaAttachment.createWithUrl(image);
 							if (width != null && height != null) {
@@ -179,7 +177,7 @@ function itemForData(item, crosspostSubreddit) {
 					if (metadata.m != null) {
 						mimeType = metadata.m;
 					}
-					const image = stripQueryParameters(metadata.s.u);
+					const image = metadata.s.u;
 					if (image != null) {
 						const attachment = MediaAttachment.createWithUrl(image);
 						if (width != null && height != null) {
@@ -218,7 +216,7 @@ function itemForData(item, crosspostSubreddit) {
 		}
 	}
 	else {
-		const image = stripQueryParameters(item["url"]);
+		const image = item["url"];
 		if (image != null) {
 			if (image.endsWith(".jpg") || image.endsWith(".jpeg")) {
 				const attachment = MediaAttachment.createWithUrl(image);
@@ -226,7 +224,7 @@ function itemForData(item, crosspostSubreddit) {
 				attachments = [attachment];
 			}
 			else {
-				const thumbnail = stripQueryParameters(item["thumbnail"]);
+				const thumbnail = item["thumbnail"];
 				if (thumbnail != null && (thumbnail.endsWith(".jpg") || thumbnail.endsWith(".jpeg"))) {
 					const attachment = MediaAttachment.createWithUrl(thumbnail);
 					attachment.mimeType = "image/jpeg";
@@ -243,7 +241,7 @@ function itemForData(item, crosspostSubreddit) {
 			}
 
 			let videoUrl = stripQueryParameters(item["secure_media"].reddit_video.hls_url);
-			let posterUrl = stripQueryParameters(item.thumbnail);
+			let posterUrl = item.thumbnail;
 			let aspectSize = null;
 			if (attachments.length > 0) {
 				posterUrl = attachments[0].url ?? attachments[0].media;
@@ -307,7 +305,7 @@ function itemForData(item, crosspostSubreddit) {
 	}
 
 	if (item["post_hint"] == "link") {
-		const externalURL = stripQueryParameters(item["url_overridden_by_dest"]);
+		const externalURL = item["url_overridden_by_dest"];
 		if (externalURL != null) {
 			if (attachments == null) {
 				attachments = [];
